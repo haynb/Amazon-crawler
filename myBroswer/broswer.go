@@ -1,4 +1,4 @@
-package main
+package myBroswer
 
 import (
 	"github.com/go-rod/rod"
@@ -14,9 +14,9 @@ func GetBrowser() *rod.Browser {
 }
 func GetDevices() devices.Device {
 	return devices.Device{
-		Title:          "iPhone 4",
+		Title:          "iPhone 15",
 		Capabilities:   []string{"touch", "mobile"},
-		UserAgent:      "Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X)",
+		UserAgent:      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
 		AcceptLanguage: "en",
 		Screen: devices.Screen{
 			DevicePixelRatio: 2,
