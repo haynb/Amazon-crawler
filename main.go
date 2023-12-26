@@ -3,69 +3,69 @@ package main
 import (
 	"fmt"
 	"github.com/go-rod/rod"
-	"github.com/go-rod/rod/lib/devices"
-	"github.com/go-rod/rod/lib/launcher"
-	"github.com/go-rod/rod/lib/utils"
 	_ "github.com/go-sql-driver/mysql"
 )
 
+func DataPage(broswer *rod.Browser, url string) {
+	page := broswer.MustPage()
+	defer page.MustClose()
+	page.MustEmulate(GetDevices())
+	page = broswer.MustPage(url)
+	page.MustWaitDOMStable()
+	CheckWeb(page)
+	if exists, moreButton, _ := page.Has("#reviews-medley-footer > div.a-row.a-spacing-medium > a"); exists {
+		moreButton.MustClick()
+		page.MustWaitDOMStable()
+		CheckWeb(page)
+		GetCommantsDetail(page)
+	} else {
+		comments := page.MustElementsX("/html/body/div[1]/div/div[9]/div[35]/div/div/div/div/div[2]/div/div[2]/span[2]/div/div/div[3]/div[3]/div/div")
+		if len(comments) == 0 {
+			return
+		}
+		for _, comment := range comments {
+			star := comment.MustElementX("div//a/i/span").MustText()
+			fmt.Println("star:   " + star)
+			msg := comment.MustElementX("div//span/span").MustText()
+			fmt.Println("msg:   " + msg)
+		}
+	}
+	fmt.Println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+}
+func GetCommantsDetail(page *rod.Page) {
+	comments := page.MustElementsX("/html/body/div[1]/div[2]/div/div[1]/div/div[1]/div[5]/div[3]/div/div/div/div")
+	fmt.Println(len(comments))
+	for _, comment := range comments {
+		star := comment.MustElementX("div//i/span").MustText()
+		fmt.Println("star:   " + star)
+		msg := comment.MustElementX("div//span/span").MustText()
+		fmt.Println("msg:   " + msg)
+	}
+	if exists, nextPage, _ := page.Has("#cm_cr-pagination_bar > ul > li.a-last > a"); exists {
+		nextPage.MustClick()
+		page.MustWaitDOMStable()
+		CheckWeb(page)
+		GetCommantsDetail(page)
+	}
+}
 func main() {
-	browserPath := "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-	u := launcher.New().Bin(browserPath).MustLaunch()
-	broswer := rod.New().ControlURL(u).MustConnect()
+	baseUrl := "https://www.amazon.com/s?k=ebike&s=review-rank&crid=1J6CMDGWJYCJU&qid=1703580152&sprefix=ebike%2Caps%2C275&ref=sr_st_review-rank&ds=v1%3Atp8QjG3ie1Cx7QyakoY5tNNvBLYKjLGpoI0%2B4Zqf7TU"
+	broswer := GetBrowser()
 	defer broswer.MustClose()
 	page := broswer.MustPage()
-	page.MustEmulate(devices.Device{
-		Title:          "iPhone 14",
-		Capabilities:   []string{"touch", "mobile"},
-		UserAgent:      "Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X)",
-		AcceptLanguage: "en",
-		Screen: devices.Screen{
-			DevicePixelRatio: 2,
-			Horizontal: devices.ScreenSize{
-				Width:  480,
-				Height: 320,
-			},
-			Vertical: devices.ScreenSize{
-				Width:  320,
-				Height: 480,
-			},
-		},
-	})
-	page = broswer.MustPage("https://www.amazon.com/-/zh/product-reviews/B08B1PV8N1/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews")
-	page.MustWaitDOMStable()
-	data, err := page.Screenshot(true, nil)
-	if err != nil {
-		panic(err)
-	}
-	// 保存截图
-	utils.OutputFile("screenshot0.png", data)
-	if exists, imgLink, _ := page.HasX("/html/body/div/div[1]/div[3]/div/div/form/div[1]/div/div/div[1]/img/@src"); exists {
-		//fmt.Println(imgLink)
-		img := Img{}
-		img.ImgLink = imgLink.MustText()
-		err := img.GetImgLink()
-		if err != nil {
-			panic(err)
-		}
-		img.EncodeToBase64()
-		//fmt.Println("Base:   " + img.Base)
-		verify := verify{
-			username: "heanyang",
-			password: "heanyang",
-		}
-		err = verify.Login()
-		if err != nil {
-			panic(err)
-		}
-		code, err := verify.GetCode(img.Base)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println("Code:   " + code)
-	}
-	comments := page.MustElements(" div.a-row.a-spacing-small.review-data > span > span.cr-original-review-content")
-	for _, comment := range comments {
-		fmt.Println(comment.MustText())
+	page.MustEmulate(GetDevices())
+	page = broswer.MustPage(baseUrl)
+	page.MustWaitLoad()
+	CheckWeb(page)
+	bikes := page.MustElementsX("/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div/div/div/span/div/div/div")
+	for _, bike := range bikes {
+		fmt.Println("=========================================")
+		link := "https://www.amazon.com/" + bike.MustElementX("div[2]//h2/a/@href").MustText()
+		fmt.Println("link:   " + link)
+		title := bike.MustElementX("div[2]//h2/a/span").MustText()
+		fmt.Println("title:   " + title)
+		img := bike.MustElementX("div[1]//img/@src").MustText()
+		fmt.Println("img:   " + img)
+		DataPage(broswer, link)
 	}
 }
