@@ -1,4 +1,4 @@
 # idea目录
-**/idea
+*.idea/
 # 截图
 *.png
