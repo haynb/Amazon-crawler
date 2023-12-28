@@ -32,9 +32,9 @@ func DataPage(broswer *rod.Browser, url string, data *BikeData, wg *sync.WaitGro
 	defer page.MustClose()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	start := time.Now() // 记录当前时间为开始时间
+	//start := time.Now() // 记录当前时间为开始时间
 	page.Context(ctx).WaitLoad()
-	fmt.Println(time.Since(start))
+	//fmt.Println(time.Since(start))
 	verify.CheckWeb(page)
 	if exist, _, _ := page.HasX("/html/body/div[1]/div/div[9]/div[3]/div[4]/div[39]/div//table/tbody/tr"); exist {
 		brands := page.MustElementsX("/html/body/div[1]/div/div[9]/div[3]/div[4]/div[39]/div//table/tbody/tr")
@@ -74,8 +74,8 @@ func DataPage(broswer *rod.Browser, url string, data *BikeData, wg *sync.WaitGro
 		fmt.Println("")
 	}
 	database.InsertOne(data)
-	fmt.Println("commants: " + strconv.Itoa(len(data.Comments)))
-	fmt.Println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+	//fmt.Println("commants: " + strconv.Itoa(len(data.Comments)))
+	//fmt.Println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 	defer func() {
 		<-*limiter
 	}()
@@ -94,16 +94,16 @@ func GetCommantsDetail(page *rod.Page, data *BikeData) {
 			msg = msgX.MustText()
 		}
 		data.Comments = append(data.Comments, Comment{Stars: star, Text: msg})
-		fmt.Print("。。。")
+		fmt.Print("***")
 	}
 	fmt.Println("")
 	if exists, nextPage, _ := page.Has("#cm_cr-pagination_bar > ul > li.a-last > a"); exists {
-		start := time.Now() // 记录当前时间为开始时间
+		//start := time.Now() // 记录当前时间为开始时间
 		nextPage.MustClick()
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		page.Context(ctx).WaitStable(1 * time.Second)
-		fmt.Println(time.Since(start))
+		//fmt.Println(time.Since(start))
 		verify.CheckWeb(page)
 		GetCommantsDetail(page, data)
 	}
@@ -127,7 +127,7 @@ func ChangeCountry(page *rod.Page) {
 	fmt.Println("已经切换了地区")
 }
 func main() {
-	thisPage := 16
+	thisPage := 0
 	thisCount := 0
 	broswer := myBroswer.GetBrowser()
 	defer broswer.MustClose()
@@ -148,9 +148,9 @@ func main() {
 		fmt.Println("新一页： " + baseUrl)
 		page = broswer.MustPage(baseUrl)
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		start := time.Now() // 记录当前时间为开始时间
+		//start := time.Now() // 记录当前时间为开始时间
 		page.Context(ctx).WaitLoad()
-		fmt.Println(time.Since(start))
+		//fmt.Println(time.Since(start))
 		verify.CheckWeb(page)
 		if count == 0 {
 			ChangeCountry(page)
@@ -159,9 +159,9 @@ func main() {
 		if thisPage != 0 && count == 1 {
 			page = broswer.MustPage(baseUrl)
 			ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
-			start := time.Now() // 记录当前时间为开始时间
+			//start := time.Now() // 记录当前时间为开始时间
 			page.Context(ctx2).WaitLoad()
-			fmt.Println(time.Since(start))
+			//fmt.Println(time.Since(start))
 			cancel2()
 			verify.CheckWeb(page)
 			count++
@@ -184,7 +184,7 @@ func main() {
 			bikeData.ImgLink = img
 			if exists, priceBlock, _ := bike.HasX("div[2]//a/span/span[1]"); exists {
 				price := priceBlock.MustText()
-				fmt.Println("price:   " + price)
+				//fmt.Println("price:   " + price)
 				bikeData.Price = price
 			}
 			wg.Add(1)
