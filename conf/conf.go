@@ -6,6 +6,7 @@ import (
 )
 
 type Config struct {
+	VerifyUserKey     string `yaml:"verifyUserKey"`
 	MongoDBAddr       string `yaml:"mongoDBAddr"`
 	MongoDBUser       string `yaml:"mongoDBUser"`
 	MongoDBPwd        string `yaml:"mongoDBPwd"`

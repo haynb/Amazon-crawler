@@ -1,6 +1,7 @@
 package verify
 
 import (
+	"amson/conf"
 	"amson/myUtils"
 	"bytes"
 	"context"
@@ -72,7 +73,7 @@ func GetCode(base64Code string) (string, error) {
 		Type    string `url:"type,omitempty"`
 		IsJson  string `url:"isJson,omitempty"`
 	}
-	userKey := "878144361c457012af865f138bb0a984"
+	userKey := conf.Conf.VerifyUserKey
 	getCodeUrl := "http://api.damagou.top/apiv1/recognize.html"
 	// 设置请求参数
 	params := RecognizeRequest{
