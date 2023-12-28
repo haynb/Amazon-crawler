@@ -17,6 +17,7 @@ import (
 type BikeData struct {
 	Title    string    `bson:"title"`
 	Url      string    `bson:"url"`
+	Brand    string    `bson:"brand"`
 	Price    string    `bson:"price"`
 	ImgLink  string    `bson:"imgLink"`
 	Comments []Comment `bson:"comments"`
@@ -35,6 +36,17 @@ func DataPage(broswer *rod.Browser, url string, data *BikeData, wg *sync.WaitGro
 	page.Context(ctx).WaitLoad()
 	fmt.Println(time.Since(start))
 	verify.CheckWeb(page)
+	if exist, _, _ := page.HasX("/html/body/div[1]/div/div[9]/div[3]/div[4]/div[39]/div//table/tbody/tr"); exist {
+		brands := page.MustElementsX("/html/body/div[1]/div/div[9]/div[3]/div[4]/div[39]/div//table/tbody/tr")
+		for _, brand := range brands {
+			left := brand.MustElementX("td[1]/span").MustText()
+			if left != "Brand" {
+				continue
+			}
+			right := brand.MustElementX("td[2]/span").MustText()
+			data.Brand = right
+		}
+	}
 	if exists, moreButton, _ := page.Has("#reviews-medley-footer > div.a-row.a-spacing-medium > a"); exists {
 		moreButton.MustClick()
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -96,22 +108,40 @@ func GetCommantsDetail(page *rod.Page, data *BikeData) {
 		GetCommantsDetail(page, data)
 	}
 }
+func ChangeCountry(page *rod.Page) {
+	// 切换地区
+	if exists, changeCountry, _ := page.HasX("//*[@id=\"nav-global-location-popover-link\"]"); exists {
+		changeCountry.MustClick()
+		page.MustWaitDOMStable()
+		input := page.MustElementX("//*[@id=\"GLUXZipUpdateInput\"]")
+		input.MustInput("20001")
+		button := page.MustElementX("//*[@id=\"GLUXZipUpdate\"]/span/input")
+		button.MustClick()
+		page.MustWaitDOMStable()
+		myUtils.TakeScreenShot(page, "切换地区")
+		doneButton := page.MustElementX("/html/body/div[6]/div/div/div[2]/span/span/input")
+		doneButton.MustClick()
+		page.MustWaitDOMStable()
+		verify.CheckWeb(page)
+	}
+	fmt.Println("已经切换了地区")
+}
 func main() {
-	thisPage := 20
+	thisPage := 16
 	thisCount := 0
 	broswer := myBroswer.GetBrowser()
 	defer broswer.MustClose()
-	page := broswer.MustPage()
-	page.MustEmulate(myBroswer.GetDevices())
 	pageNum := 1
 	var wg sync.WaitGroup
-	limiter := make(chan struct{}, 5)
+	limiter := make(chan struct{}, 8)
 	count := 0
 	for pageNum < 21 {
 		if pageNum < thisPage {
 			pageNum++
 			continue
 		}
+		page := broswer.MustPage()
+		page.MustEmulate(myBroswer.GetDevices())
 		baseUrl := "https://www.amazon.com/s?k=ebike&s=review-rank&page=" +
 			strconv.Itoa(pageNum) +
 			"&crid=2CR8AL3A9I0TN&qid=1703656735&sprefix=ebike%2Caps%2C294&ref=sr_pg_18"
@@ -123,22 +153,18 @@ func main() {
 		fmt.Println(time.Since(start))
 		verify.CheckWeb(page)
 		if count == 0 {
-			// 切换地区
-			if exists, changeCountry, _ := page.HasX("//*[@id=\"nav-global-location-popover-link\"]"); exists {
-				changeCountry.MustClick()
-				page.MustWaitDOMStable()
-				input := page.MustElementX("//*[@id=\"GLUXZipUpdateInput\"]")
-				input.MustInput("20001")
-				button := page.MustElementX("//*[@id=\"GLUXZipUpdate\"]/span/input")
-				button.MustClick()
-				page.MustWaitDOMStable()
-				myUtils.TakeScreenShot(page, "切换地区")
-				doneButton := page.MustElementX("/html/body/div[6]/div/div/div[2]/span/span/input")
-				doneButton.MustClick()
-				page.MustWaitDOMStable()
-				verify.CheckWeb(page)
-			}
-			count = 1
+			ChangeCountry(page)
+			count++
+		}
+		if thisPage != 0 && count == 1 {
+			page = broswer.MustPage(baseUrl)
+			ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
+			start := time.Now() // 记录当前时间为开始时间
+			page.Context(ctx2).WaitLoad()
+			fmt.Println(time.Since(start))
+			cancel2()
+			verify.CheckWeb(page)
+			count++
 		}
 		myUtils.TakeScreenShot(page, "第"+strconv.Itoa(pageNum)+"页")
 		bikes := page.MustElementsX("/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div/div/div/span/div/div/div")

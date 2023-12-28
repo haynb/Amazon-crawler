@@ -3,12 +3,14 @@ package verify
 import (
 	"amson/myUtils"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"github.com/go-rod/rod"
 	querystring "github.com/google/go-querystring/query"
 	"io"
 	"net/http"
+	"time"
 )
 
 type Img struct {
@@ -123,7 +125,9 @@ func CheckWeb(page *rod.Page) {
 		page.MustElement("#captchacharacters").MustInput(code)
 		myUtils.TakeScreenShot(page, "验证码")
 		page.MustElementX("/html/body/div/div[1]/div[3]/div/div/form/div[2]/div/span/span/button").MustClick()
-		page.MustWaitLoad()
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		page.Context(ctx).WaitLoad()
 		myUtils.TakeScreenShot(page, "验证码后")
 	}
 }
