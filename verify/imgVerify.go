@@ -1,7 +1,7 @@
 package verify
 
 import (
-	"amson/MyUtils"
+	"amson/myUtils"
 	"bytes"
 	"encoding/base64"
 	"fmt"
@@ -121,9 +121,9 @@ func CheckWeb(page *rod.Page) {
 		}
 		fmt.Println("Code:   " + code)
 		page.MustElement("#captchacharacters").MustInput(code)
-		MyUtils.TakeScreenShot(page, "验证码")
+		myUtils.TakeScreenShot(page, "验证码")
 		page.MustElementX("/html/body/div/div[1]/div[3]/div/div/form/div[2]/div/span/span/button").MustClick()
 		page.MustWaitLoad()
-		MyUtils.TakeScreenShot(page, "验证码后")
+		myUtils.TakeScreenShot(page, "验证码后")
 	}
 }

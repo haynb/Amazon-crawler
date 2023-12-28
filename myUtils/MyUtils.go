@@ -1,4 +1,4 @@
-package MyUtils
+package myUtils
 
 import (
 	"github.com/go-rod/rod"
