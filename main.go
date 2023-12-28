@@ -135,16 +135,16 @@ func main() {
 	var wg sync.WaitGroup
 	limiter := make(chan struct{}, 8)
 	count := 0
-	for pageNum < 21 {
+	for pageNum < 234 {
 		if pageNum < thisPage {
 			pageNum++
 			continue
 		}
 		page := broswer.MustPage()
 		page.MustEmulate(myBroswer.GetDevices())
-		baseUrl := "https://www.amazon.com/s?k=ebike&s=review-rank&page=" +
+		baseUrl := "https://www.amazon.com/s?k=ebike&i=sporting&s=review-rank&page=" +
 			strconv.Itoa(pageNum) +
-			"&crid=2CR8AL3A9I0TN&qid=1703656735&sprefix=ebike%2Caps%2C294&ref=sr_pg_18"
+			"&crid=2VQPTLVO3Y2MQ&qid=1703754638&sprefix=ebike%2Csporting%2C388&ref=sr_pg_3"
 		fmt.Println("新一页： " + baseUrl)
 		page = broswer.MustPage(baseUrl)
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
