@@ -135,23 +135,24 @@ func main() {
 	var thisPage int
 	fmt.Scanf("%d", &thisPage)
 	thisCount := 0
-	broswer := myBroswer.GetBrowser()
-	defer broswer.MustClose()
 	pageNum := 1
 	var wg sync.WaitGroup
 	limiter := make(chan struct{}, 4)
 	count := 0
 	for pageNum < 277 {
+		broswer := myBroswer.GetBrowser()
 		if pageNum < thisPage {
 			pageNum++
 			continue
 		}
-		page := broswer.MustPage().MustEmulate(myBroswer.GetDevices())
-		page = broswer.MustPage("https://www.amazon.com")
+		page := broswer.MustPage("https://www.amazon.com")
 		ctx1, cancel1 := context.WithTimeout(context.Background(), 10*time.Second)
 		page.Context(ctx1).WaitLoad()
+		myUtils.TakeScreenShot(page, "首页")
+		fmt.Println("https://www.amazon.com")
 		cancel1()
 		verify.CheckWeb(page)
+		page = broswer.MustPage().MustEmulate(myBroswer.GetDevices())
 		url := "https://www.amazon.com/s?k=ebike&i=sporting&page=" +
 			strconv.Itoa(pageNum) +
 			"&crid=1DHD764OMGVYY&qid=1704159169&sprefix=e%2Csporting%2C303&ref=sr_pg_4"
@@ -210,6 +211,7 @@ func main() {
 		wg.Wait()
 		cancel()
 		page.MustClose()
+		broswer.MustClose()
 		pageNum++
 		fmt.Println("翻页")
 	}
