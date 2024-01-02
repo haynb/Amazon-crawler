@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-rod/rod"
+	"github.com/go-rod/rod/lib/proto"
 	_ "github.com/go-sql-driver/mysql"
 	"strconv"
 	"sync"
@@ -39,12 +40,14 @@ func DataPage(broswer *rod.Browser, url string, data *BikeData, wg *sync.WaitGro
 	if exist, _, _ := page.HasX("/html/body/div[1]/div/div[9]/div[3]/div[4]/div[39]/div//table/tbody/tr"); exist {
 		brands := page.MustElementsX("/html/body/div[1]/div/div[9]/div[3]/div[4]/div[39]/div//table/tbody/tr")
 		for _, brand := range brands {
-			left := brand.MustElementX("td[1]/span").MustText()
-			if left != "Brand" {
-				continue
+			if exist, _, _ := brand.HasX("td[1]/span"); exist {
+				left := brand.MustElementX("td[1]/span").MustText()
+				if left != "Brand" {
+					continue
+				}
+				right := brand.MustElementX("td[2]/span").MustText()
+				data.Brand = right
 			}
-			right := brand.MustElementX("td[2]/span").MustText()
-			data.Brand = right
 		}
 	}
 	if exists, moreButton, _ := page.Has("#reviews-medley-footer > div.a-row.a-spacing-medium > a"); exists {
@@ -99,7 +102,7 @@ func GetCommantsDetail(page *rod.Page, data *BikeData) {
 	fmt.Println("")
 	if exists, nextPage, _ := page.Has("#cm_cr-pagination_bar > ul > li.a-last > a"); exists {
 		//start := time.Now() // 记录当前时间为开始时间
-		nextPage.MustClick()
+		nextPage.Click(proto.InputMouseButtonLeft, 1)
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		page.Context(ctx).WaitStable(1 * time.Second)
@@ -120,6 +123,7 @@ func ChangeCountry(page *rod.Page) {
 		page.MustWaitDOMStable()
 		myUtils.TakeScreenShot(page, "切换地区")
 		doneButton := page.MustElementX("/html/body/div[6]/div/div/div[2]/span/span/input")
+		//doneButton := page.MustElementX("/html/body/div[5]/div/div/div[2]/span/span/input")
 		doneButton.MustClick()
 		page.MustWaitDOMStable()
 		verify.CheckWeb(page)
@@ -127,28 +131,35 @@ func ChangeCountry(page *rod.Page) {
 	fmt.Println("已经切换了地区")
 }
 func main() {
-	thisPage := 0
+	fmt.Print("输入一下开始页数: ")
+	var thisPage int
+	fmt.Scanf("%d", &thisPage)
 	thisCount := 0
 	broswer := myBroswer.GetBrowser()
 	defer broswer.MustClose()
 	pageNum := 1
 	var wg sync.WaitGroup
-	limiter := make(chan struct{}, 8)
+	limiter := make(chan struct{}, 4)
 	count := 0
-	for pageNum < 234 {
+	for pageNum < 277 {
 		if pageNum < thisPage {
 			pageNum++
 			continue
 		}
-		page := broswer.MustPage()
-		page.MustEmulate(myBroswer.GetDevices())
-		baseUrl := "https://www.amazon.com/s?k=ebike&i=sporting&s=review-rank&page=" +
+		page := broswer.MustPage().MustEmulate(myBroswer.GetDevices())
+		page = broswer.MustPage("https://www.amazon.com")
+		ctx1, cancel1 := context.WithTimeout(context.Background(), 10*time.Second)
+		page.Context(ctx1).WaitLoad()
+		cancel1()
+		verify.CheckWeb(page)
+		url := "https://www.amazon.com/s?k=ebike&i=sporting&page=" +
 			strconv.Itoa(pageNum) +
-			"&crid=2VQPTLVO3Y2MQ&qid=1703754638&sprefix=ebike%2Csporting%2C388&ref=sr_pg_3"
-		fmt.Println("新一页： " + baseUrl)
-		page = broswer.MustPage(baseUrl)
+			"&crid=1DHD764OMGVYY&qid=1704159169&sprefix=e%2Csporting%2C303&ref=sr_pg_4"
+		fmt.Println(url)
+		page = broswer.MustPage(url)
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		//start := time.Now() // 记录当前时间为开始时间
+		time.Sleep(10 * time.Second)
 		page.Context(ctx).WaitLoad()
 		//fmt.Println(time.Since(start))
 		verify.CheckWeb(page)
@@ -157,7 +168,7 @@ func main() {
 			count++
 		}
 		if thisPage != 0 && count == 1 {
-			page = broswer.MustPage(baseUrl)
+			page = broswer.MustPage(url)
 			ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
 			//start := time.Now() // 记录当前时间为开始时间
 			page.Context(ctx2).WaitLoad()
@@ -175,7 +186,13 @@ func main() {
 			limiter <- struct{}{}
 			fmt.Println("=========================================     page：" + strconv.Itoa(pageNum) + "   NUM: " + strconv.Itoa(count))
 			bikeData := BikeData{}
-			link := "https://www.amazon.com/" + bike.MustElementX("div[2]//h2/a/@href").MustText()
+			var link string
+			if exists, bikeLink, _ := bike.HasX("div[2]//h2/a/@href"); exists {
+				link = "https://www.amazon.com/" + bikeLink.MustText()
+			} else {
+				<-limiter
+				continue
+			}
 			fmt.Println("link:   " + link)
 			bikeData.Url = link
 			title := bike.MustElementX("div[2]//h2/a/span").MustText()
@@ -192,7 +209,9 @@ func main() {
 		}
 		wg.Wait()
 		cancel()
+		page.MustClose()
 		pageNum++
+		fmt.Println("翻页")
 	}
 	defer database.Disconnect()
 }

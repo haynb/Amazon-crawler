@@ -126,7 +126,7 @@ func CheckWeb(page *rod.Page) {
 		page.MustElement("#captchacharacters").MustInput(code)
 		myUtils.TakeScreenShot(page, "验证码")
 		page.MustElementX("/html/body/div/div[1]/div[3]/div/div/form/div[2]/div/span/span/button").MustClick()
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 		defer cancel()
 		page.Context(ctx).WaitLoad()
 		myUtils.TakeScreenShot(page, "验证码后")
