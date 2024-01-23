@@ -140,11 +140,11 @@ func main() {
 	limiter := make(chan struct{}, 4)
 	count := 0
 	for pageNum < 277 {
-		broswer := myBroswer.GetBrowser()
 		if pageNum < thisPage {
 			pageNum++
 			continue
 		}
+		broswer := myBroswer.GetBrowser()
 		page := broswer.MustPage("https://www.amazon.com")
 		ctx1, cancel1 := context.WithTimeout(context.Background(), 10*time.Second)
 		page.Context(ctx1).WaitLoad()
